@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>لعبة بزل تعليمية - تكوين كلمات</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --glass: rgba(255,255,255,0.15);
+      --glass-strong: rgba(255,255,255,0.25);
+    }
+    html, body { height: 100%; }
+    body { font-family: 'Tajawal', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Liberation Sans', sans-serif; }
+    /* Confetti animation */
+    .confetti-piece {
+      position: absolute;
+      top: -10px;
+      width: 10px;
+      height: 16px;
+      opacity: 0.9;
+      border-radius: 2px;
+      animation: fall linear forwards;
+      transform-origin: center;
+    }
+    @keyframes fall {
+      0%   { transform: translateY(-5vh) rotate(0deg); opacity: 0; }
+      10%  { opacity: 1; }
+      100% { transform: translateY(110vh) rotate(540deg); opacity: 0.9; }
+    }
+    /* Soft glow for selected tile */
+    .selected-tile {
+      box-shadow: 0 0 0 3px rgba(255,255,255,0.6), 0 10px 25px rgba(0,0,0,0.25);
+      transform: translateY(-2px) scale(1.02);
+    }
+    /* Smooth transitions */
+    .smooth { transition: all .2s ease; }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-800 to-fuchsia-800 text-white selection:bg-fuchsia-400 selection:text-indigo-900">
+  <main class="min-h-screen flex items-center justify-center p-4 md:p-8">
+    <div class="w-full max-w-5xl">
+      <!-- Header -->
+      <header class="mb-6 md:mb-8 text-center">
+        <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight">
+          لعبة البزل التعليمية
+        </h1>
+        <p class="mt-2 md:mt-3 text-fuchsia-200/90 text-base md:text-lg">
+          رتّب الحروف لتكوين الكلمة الصحيحة. كل كلمة لها تلميح يساعدك!
+        </p>
+      </header>
+
+      <!-- Game Card -->
+      <section class="relative rounded-3xl p-4 md:p-8 bg-white/10 backdrop-blur-xl shadow-2xl ring-1 ring-white/20 overflow-hidden">
+        <!-- Decorative glow -->
+        <div class="pointer-events-none absolute -top-24 -left-24 w-72 h-72 bg-fuchsia-500/30 rounded-full blur-3xl"></div>
+        <div class="pointer-events-none absolute -bottom-24 -right-24 w-72 h-72 bg-indigo-500/30 rounded-full blur-3xl"></div>
+
+        <!-- Top bar: word info + stats -->
+        <div class="flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
+          <div class="flex items-center gap-3">
+            <div id="wordIcon" class="text-2xl md:text-3xl">🎒</div>
+            <div>
+              <div class="text-sm text-fuchsia-100/80">التلميح</div>
+              <div id="wordHint" class="font-semibold text-white/95">مكان للتعلم والدراسة</div>
+            </div>
+          </div>
+          <div class="flex flex-wrap items-center gap-3 md:gap-4">
+            <div class="px-3 py-2 rounded-xl bg-white/10 ring-1 ring-white/20">
+              <div class="text-xs text-fuchsia-100/80">الزمن</div>
+              <div id="timeBox" class="font-bold">00:00</div>
+            </div>
+            <div class="px-3 py-2 rounded-xl bg-white/10 ring-1 ring-white/20">
+              <div class="text-xs text-fuchsia-100/80">الحركات</div>
+              <div id="movesBox" class="font-bold">0</div>
+            </div>
+            <div class="px-3 py-2 rounded-xl bg-white/10 ring-1 ring-white/20">
+              <div class="text-xs text-fuchsia-100/80">التلميحات</div>
+              <div id="hintsBox" class="font-bold">0</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="mt-5 flex flex-wrap gap-3">
+          <button id="newWordBtn" class="smooth px-4 py-2.5 rounded-xl bg-gradient-to-r from-fuchsia-500 to-violet-600 hover:from-fuchsia-600 hover:to-violet-700 active:scale-[.98] shadow-lg shadow-fuchsia-900/30 font-semibold">
+            كلمة جديدة
+          </button>
+          <button id="hintBtn" class="smooth px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-[.98] ring-1 ring-white/20 font-semibold">
+            تلميح
+          </button>
+          <button id="resetBtn" class="smooth px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-[.98] ring-1 ring-white/20 font-semibold">
+            إعادة
+          </button>
+          <button id="shuffleBtn" class="smooth px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-[.98] ring-1 ring-white/20 font-semibold">
+            خلط الحروف
+          </button>
+        </div>
+
+        <!-- Puzzle Area -->
+        <div class="mt-6 grid lg:grid-cols-2 gap-6">
+          <!-- Slots -->
+          <div>
+            <div class="mb-2 text-sm text-fuchsia-100/80">الكلمة</div>
+            <div id="slots" class="flex flex-wrap gap-3 p-4 rounded-2xl bg-white/5 ring-1 ring-white/10 min-h-[92px]">
+            </div>
+            <div class="mt-2 text-xs text-white/70">
+              ملاحظة: يمكنك النقر على خانة ممتلئة لإرجاع الحرف إلى سلة الحروف.
+            </div>
+          </div>
+
+          <!-- Tiles Pool -->
+          <div>
+            <div class="mb-2 text-sm text-fuchsia-100/80">سلة الحروف</div>
+            <div id="pool" class="flex flex-wrap gap-3 p-4 rounded-2xl bg-white/5 ring-1 ring-white/10 min-h-[92px]">
+            </div>
+            <div class="mt-2 text-xs text-white/70">
+              طريقة اللعب: اختر حرفًا ثم اختر الخانة التي تريد وضعه فيها. يمكن أيضاً تبديل حرف مكان آخر مباشرة.
+            </div>
+          </div>
+        </div>
+
+        <!-- Success Overlay -->
+        <div id="successOverlay" class="hidden absolute inset-0 rounded-3xl bg-black/60 backdrop-blur-md flex items-center justify-center p-6">
+          <div class="relative w全文 max-w-md text-center rounded-2xl p-6 md:p-8 bg-gradient-to-br from-indigo-700/90 to-fuchsia-700/90 ring-1 ring-white/20 shadow-2xl">
+            <h2 class="text-2xl md:text-3xl font-extrabold">أحسنت! 🎉</h2>
+            <p class="mt-2 text-fuchsia-100/90">أنهيت الكلمة بنجاح.</p>
+            <div class="mt-4 flex items-center justify-center gap-4">
+              <div class="px-4 py-2 rounded-xl bg-white/10 ring-1 ring-white/20">
+                <div class="text-xs text-fuchsia-100/80">الزمن</div>
+                <div id="finalTime" class="font-bold">00:00</div>
+              </div>
+              <div class="px-4 py-2 rounded-xl bg-white/10 ring-1 ring-white/20">
+                <div class="text-xs text-fuchsia-100/80">الحركات</div>
+                <div id="finalMoves" class="font-bold">0</div>
+              </div>
+            </div>
+            <button id="playAgainBtn" class="mt-6 smooth px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 active:scale-[.98] shadow-lg font-bold text-indigo-900">
+              كلمة جديدة
+            </button>
+            <div id="confettiBox" class="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl"></div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="mt-6 text-center text-fuchsia-100/70 text-sm">
+        تلميح: حاول إنهاء الكلمة بأقل عدد من الحركات وأسرع وقت!
+      </footer>
+    </div>
+  </main>
+
+  <script>
+    const WORDS = [
+      { word: "مدرسة", hint: "مكان للتعلم والدراسة", icon: "🎒" },
+      { word: "كتاب", hint: "نقرأ فيه المعرفة", icon: "📘" },
+      { word: "حاسوب", hint: "نستخدمه للتعلم والابتكار", icon: "💻" },
+      { word: "طبيب", hint: "يعالج المرضى ويساعدهم", icon: "🩺" },
+      { word: "علوم", hint: "نستكشف بها الكون", icon: "🔬" },
+      { word: "رياضيات", hint: "علم الأعداد والأشكال", icon: "➕" },
+      { word: "لغة", hint: "وسيلة للتواصل والتعبير", icon: "🗣️" },
+      { word: "طبيعة", hint: "العالم من حولنا", icon: "🌿" }
+    ];
+
+    const slotsEl = document.getElementById('slots');
+    const poolEl = document.getElementById('pool');
+    const wordHintEl = document.getElementById('wordHint');
+    const wordIconEl = document.getElementById('wordIcon');
+    const timeBox = document.getElementById('timeBox');
+    const movesBox = document.getElementById('movesBox');
+    const hintsBox = document.getElementById('hintsBox');
+
+    const newWordBtn = document.getElementById('newWordBtn');
+    const hintBtn = document.getElementById('hintBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const shuffleBtn = document.getElementById('shuffleBtn');
+
+    const successOverlay = document.getElementById('successOverlay');
+    const finalTimeEl = document.getElementById('finalTime');
+    const finalMovesEl = document.getElementById('finalMoves');
+    const playAgainBtn = document.getElementById('playAgainBtn');
+    const confettiBox = document.getElementById('confettiBox');
+
+    let current = null;
+    let moves = 0;
+    let hintsUsed = 0;
+    let started = false;
+    let timer = null;
+    let seconds = 0;
+    let selectedTileId = null;
+    let uid = 0;
+
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60).toString().padStart(2, '0');
+      const s = (sec % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    function startTimer() {
+      if (started) return;
+      started = true;
+      timer = setInterval(() => {
+        seconds += 1;
+        timeBox.textContent = formatTime(seconds);
+      }, 1000);
+    }
+
+    function stopTimer() {
+      clearInterval(timer);
+      timer = null;
+      started = false;
+    }
+
+    function resetTimer() {
+      stopTimer();
+      seconds = 0;
+      timeBox.textContent = "00:00";
+    }
+
+    function updateStats() {
+      movesBox.textContent = moves;
+      hintsBox.textContent = hintsUsed;
+    }
+
+    function randomChoice(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function createSlot(index, correctChar) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = "smooth relative w-14 h-14 md:w-16 md:h-16 grid place-content-center rounded-2xl bg-white/10 ring-1 ring-white/20 text-2xl font-extrabold text-white/90";
+      btn.dataset.index = index;
+      btn.dataset.correct = correctChar;
+      btn.dataset.char = "";
+      btn.dataset.tileId = "";
+      btn.addEventListener('click', () => {
+        const hasChar = btn.dataset.char !== "";
+        if (hasChar && !selectedTileId) {
+          removeFromSlot(btn);
+          moves += 1;
+          updateStats();
+          return;
+        }
+        if (selectedTileId) {
+          const selectedTile = document.querySelector(`[data-id="${selectedTileId}"]`);
+          if (!selectedTile) { selectedTileId = null; return; }
+          const selectedChar = selectedTile.dataset.char;
+          if (hasChar) {
+            const prevChar = btn.dataset.char;
+            const prevTileId = btn.dataset.tileId;
+            placeTileInSlot(selectedTile, btn, { countMove: false });
+            if (prevTileId) {
+              const backTile = createTile(prevChar);
+              poolEl.appendChild(backTile);
+            }
+            moves += 1;
+            updateStats();
+            setSelectedTile(null);
+            checkProgress();
+            return;
+          } else {
+            placeTileInSlot(selectedTile, btn);
+            moves += 1;
+            updateStats();
+            setSelectedTile(null);
+            checkProgress();
+            return;
+          }
+        }
+      });
+      return btn;
+    }
+
+    function setSelectedTile(id) {
+      document.querySelectorAll('.tile').forEach(t => t.classList.remove('selected-tile'));
+      selectedTileId = id;
+      if (!id) return;
+      const el = document.querySelector(`[data-id="${id}"]`);
+      if (el) el.classList.add('selected-tile');
+    }
+
+    function createTile(char) {
+      uid += 1;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = "tile smooth w-14 h-14 md:w-16 md:h-16 grid place-content-center rounded-2xl bg-gradient-to-br from-fuchsia-400 to-violet-600 hover:from-fuchsia-500 hover:to-violet-700 shadow-lg shadow-fuchsia-900/30 text-2xl font-extrabold text-indigo-950";
+      btn.textContent = char;
+      btn.dataset.char = char;
+      btn.dataset.id = "t" + uid;
+
+      btn.addEventListener('click', () => {
+        startTimer();
+        if (selectedTileId === btn.dataset.id) {
+          setSelectedTile(null);
+        } else {
+          setSelectedTile(btn.dataset.id);
+        }
+      });
+      return btn;
+    }
+
+    function placeTileInSlot(tileEl, slotEl, opts = {}) {
+      const { countMove = true } = opts;
+      startTimer();
+      const char = tileEl.dataset.char;
+      slotEl.dataset.char = char;
+      slotEl.dataset.tileId = tileEl.dataset.id;
+      slotEl.textContent = char;
+      const isCorrect = char === slotEl.dataset.correct;
+      slotEl.classList.remove('bg-white/10', 'ring-white/20', 'bg-red-500/20', 'ring-red-400/40', 'bg-emerald-500/20', 'ring-emerald-400/40');
+      slotEl.classList.add(isCorrect ? 'bg-emerald-500/20' : 'bg-red-500/20', isCorrect ? 'ring-emerald-400/40' : 'ring-red-400/40');
+      tileEl.remove();
+      if (countMove) {
+        moves += 1;
+        updateStats();
+      }
+    }
+
+    function removeFromSlot(slotEl) {
+      const char = slotEl.dataset.char;
+      if (!char) return;
+      const tile = createTile(char);
+      poolEl.appendChild(tile);
+
+      slotEl.dataset.char = "";
+      slotEl.dataset.tileId = "";
+      slotEl.textContent = "";
+      slotEl.className = "smooth relative w-14 h-14 md:w-16 md:h-16 grid place-content-center rounded-2xl bg-white/10 ring-1 ring-white/20 text-2xl font-extrabold text-white/90";
+    }
+
+    function clearBoard() {
+      slotsEl.innerHTML = "";
+      poolEl.innerHTML = "";
+      setSelectedTile(null);
+    }
+
+    function shuffleArray(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function shufflePool() {
+      const children = Array.from(poolEl.children);
+      shuffleArray(children);
+      children.forEach(ch => poolEl.appendChild(ch));
+    }
+
+    function checkProgress() {
+      const slotNodes = Array.from(slotsEl.children);
+      let allCorrect = true;
+      for (const slot of slotNodes) {
+        const placed = slot.dataset.char || "";
+        const correct = slot.dataset.correct || "";
+        if (!placed || placed !== correct) {
+          allCorrect = false;
+        }
+      }
+      if (allCorrect && slotNodes.length > 0) {
+        onWin();
+      }
+    }
+
+    function onWin() {
+      stopTimer();
+      finalTimeEl.textContent = formatTime(seconds);
+      finalMovesEl.textContent = moves.toString();
+      successOverlay.classList.remove('hidden');
+      launchConfetti();
+    }
+
+    function launchConfetti() {
+      confettiBox.innerHTML = "";
+      const colors = ["#f472b6", "#a78bfa", "#60a5fa", "#34d399", "#f59e0b", "#ef4444"];
+      const count = 90;
+      for (let i = 0; i < count; i++) {
+        const piece = document.createElement('div');
+        piece.className = "confetti-piece";
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.background = color;
+        piece.style.left = Math.random() * 100 + "%";
+        const delay = (Math.random() * 0.7).toFixed(2);
+        const duration = (2.8 + Math.random() * 1.9).toFixed(2);
+        piece.style.animationDuration = duration + "s";
+        piece.style.animationDelay = delay + "s";
+        piece.style.transform = `rotate(${Math.floor(Math.random()*360)}deg)`;
+        confettiBox.appendChild(piece);
+      }
+    }
+
+    function getPoolTileForChar(char) {
+      return Array.from(poolEl.children).find(t => t.dataset.char === char) || null;
+    }
+
+    function findIncorrectSlotWithChar(char) {
+      const slots = Array.from(slotsEl.children);
+      for (const s of slots) {
+        if ((s.dataset.char || "") === char && s.dataset.correct !== char) {
+          return s;
+        }
+      }
+      return null;
+    }
+
+    function applyHint() {
+      const slots = Array.from(slotsEl.children);
+      let targetSlot = slots.find(s => !s.dataset.char);
+      let putCorrectChar;
+      if (targetSlot) {
+        putCorrectChar = targetSlot.dataset.correct;
+      } else {
+        targetSlot = slots.find(s => s.dataset.char && s.dataset.char !== s.dataset.correct);
+        if (!targetSlot) return;
+        putCorrectChar = targetSlot.dataset.correct;
+      }
+
+      let tile = getPoolTileForChar(putCorrectChar);
+      if (!tile) {
+        const wrongSlot = findIncorrectSlotWithChar(putCorrectChar);
+        if (wrongSlot) {
+          const ch = wrongSlot.dataset.char;
+          removeFromSlot(wrongSlot);
+          tile = getPoolTileForChar(ch);
+        }
+      }
+      if (!tile) return;
+      if (targetSlot.dataset.char && targetSlot.dataset.char !== targetSlot.dataset.correct) {
+        removeFromSlot(targetSlot);
+      }
+      placeTileInSlot(tile, targetSlot, { countMove: false });
+
+      hintsUsed += 1;
+      updateStats();
+      checkProgress();
+    }
+
+    function initGame(newRandom = true) {
+      clearBoard();
+      resetTimer();
+      moves = 0;
+      hintsUsed = 0;
+      updateStats();
+
+      const chosen = newRandom ? randomChoice(WORDS) : current || randomChoice(WORDS);
+      const letters = Array.from(chosen.word);
+      current = { ...chosen, letters };
+
+      letters.forEach((ch, i) => {
+        const s = createSlot(i, ch);
+        slotsEl.appendChild(s);
+      });
+
+      const shuffled = shuffleArray([...letters]);
+      shuffled.forEach(ch => {
+        const t = createTile(ch);
+        poolEl.appendChild(t);
+      });
+
+      wordHintEl.textContent = chosen.hint;
+      wordIconEl.textContent = chosen.icon;
+
+      successOverlay.classList.add('hidden');
+      confettiBox.innerHTML = "";
+    }
+
+    newWordBtn.addEventListener('click', () => initGame(true));
+    resetBtn.addEventListener('click', () => {
+      Array.from(slotsEl.children).forEach(removeFromSlot);
+      shufflePool();
+      moves += 1;
+      updateStats();
+    });
+    shuffleBtn.addEventListener('click', () => {
+      shufflePool();
+      moves += 1;
+      updateStats();
+    });
+    hintBtn.addEventListener('click', () => applyHint());
+    playAgainBtn.addEventListener('click', () => initGame(true));
+
+    initGame(true);
+  </script>
+</body>
+</html>
