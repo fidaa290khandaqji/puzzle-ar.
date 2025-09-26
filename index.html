@@ -3,17 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>لعبة بزل تعليمية - تكوين كلمات</title>
+  <title>مغامرة الرياضيات للصفوف من الأول إلى الرابع</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --glass: rgba(255,255,255,0.15);
-      --glass-strong: rgba(255,255,255,0.25);
-    }
     html, body { height: 100%; }
-    body { font-family: 'Tajawal', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Liberation Sans', sans-serif; }
-    /* Confetti animation */
+    body { font-family: 'Tajawal', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
     .confetti-piece {
       position: absolute;
       top: -10px;
@@ -29,459 +24,669 @@
       10%  { opacity: 1; }
       100% { transform: translateY(110vh) rotate(540deg); opacity: 0.9; }
     }
-    /* Soft glow for selected tile */
-    .selected-tile {
-      box-shadow: 0 0 0 3px rgba(255,255,255,0.6), 0 10px 25px rgba(0,0,0,0.25);
-      transform: translateY(-2px) scale(1.02);
-    }
-    /* Smooth transitions */
-    .smooth { transition: all .2s ease; }
   </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-800 to-fuchsia-800 text-white selection:bg-fuchsia-400 selection:text-indigo-900">
+<body class="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-fuchsia-800 text-white selection:bg-fuchsia-400 selection:text-indigo-900">
   <main class="min-h-screen flex items-center justify-center p-4 md:p-8">
     <div class="w-full max-w-5xl">
-      <!-- Header -->
-      <header class="mb-6 md:mb-8 text-center">
-        <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight">
-          لعبة البزل التعليمية
-        </h1>
-        <p class="mt-2 md:mt-3 text-fuchsia-200/90 text-base md:text-lg">
-          رتّب الحروف لتكوين الكلمة الصحيحة. كل كلمة لها تلميح يساعدك!
+      <header class="mb-8 text-center space-y-3">
+        <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight">مغامرة الرياضيات التفاعلية</h1>
+        <p class="text-base md:text-lg text-fuchsia-100/90">
+          لعبة تعليمية ممتعة للصفوف من الأول إلى الرابع، تدمج بين المسائل اللفظية والتمثيلات البصرية لتقوية مهارات الحساب.
         </p>
+        <p class="text-sm text-indigo-100/80">اختر صفك الدراسي، احصل على نقاط، واستمتع بالتعلم مع التلميحات والخطوات التوضيحية.</p>
       </header>
 
-      <!-- Game Card -->
-      <section class="relative rounded-3xl p-4 md:p-8 bg-white/10 backdrop-blur-xl shadow-2xl ring-1 ring-white/20 overflow-hidden">
-        <!-- Decorative glow -->
-        <div class="pointer-events-none absolute -top-24 -left-24 w-72 h-72 bg-fuchsia-500/30 rounded-full blur-3xl"></div>
-        <div class="pointer-events-none absolute -bottom-24 -right-24 w-72 h-72 bg-indigo-500/30 rounded-full blur-3xl"></div>
+      <section class="relative overflow-hidden rounded-3xl bg-white/10 backdrop-blur-xl ring-1 ring-white/15 p-5 md:p-8 shadow-2xl">
+        <div class="pointer-events-none absolute -top-32 -left-24 h-72 w-72 rounded-full bg-fuchsia-500/20 blur-3xl"></div>
+        <div class="pointer-events-none absolute -bottom-32 -right-24 h-72 w-72 rounded-full bg-indigo-500/20 blur-3xl"></div>
 
-        <!-- Top bar: word info + stats -->
-        <div class="flex flex-col md:flex-row gap-4 md:items-center md:justify-between">
-          <div class="flex items-center gap-3">
-            <div id="wordIcon" class="text-2xl md:text-3xl">🎒</div>
+        <div class="relative space-y-6">
+          <div class="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <div class="text-sm text-fuchsia-100/80">التلميح</div>
-              <div id="wordHint" class="font-semibold text-white/95">مكان للتعلم والدراسة</div>
+              <h2 class="text-lg font-semibold text-white/90">اختر الصف الدراسي</h2>
+              <p class="text-sm text-fuchsia-100/80">يتم ضبط نطاق الأعداد ونوع المهام بشكل يتناسب مع كل صف.</p>
             </div>
-          </div>
-          <div class="flex flex-wrap items-center gap-3 md:gap-4">
-            <div class="px-3 py-2 rounded-xl bg-white/10 ring-1 ring-white/20">
-              <div class="text-xs text-fuchsia-100/80">الزمن</div>
-              <div id="timeBox" class="font-bold">00:00</div>
-            </div>
-            <div class="px-3 py-2 rounded-xl bg-white/10 ring-1 ring-white/20">
-              <div class="text-xs text-fuchsia-100/80">الحركات</div>
-              <div id="movesBox" class="font-bold">0</div>
-            </div>
-            <div class="px-3 py-2 rounded-xl bg-white/10 ring-1 ring-white/20">
-              <div class="text-xs text-fuchsia-100/80">التلميحات</div>
-              <div id="hintsBox" class="font-bold">0</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Controls -->
-        <div class="mt-5 flex flex-wrap gap-3">
-          <button id="newWordBtn" class="smooth px-4 py-2.5 rounded-xl bg-gradient-to-r from-fuchsia-500 to-violet-600 hover:from-fuchsia-600 hover:to-violet-700 active:scale-[.98] shadow-lg shadow-fuchsia-900/30 font-semibold">
-            كلمة جديدة
-          </button>
-          <button id="hintBtn" class="smooth px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-[.98] ring-1 ring-white/20 font-semibold">
-            تلميح
-          </button>
-          <button id="resetBtn" class="smooth px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-[.98] ring-1 ring-white/20 font-semibold">
-            إعادة
-          </button>
-          <button id="shuffleBtn" class="smooth px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-[.98] ring-1 ring-white/20 font-semibold">
-            خلط الحروف
-          </button>
-        </div>
-
-        <!-- Puzzle Area -->
-        <div class="mt-6 grid lg:grid-cols-2 gap-6">
-          <!-- Slots -->
-          <div>
-            <div class="mb-2 text-sm text-fuchsia-100/80">الكلمة</div>
-            <div id="slots" class="flex flex-wrap gap-3 p-4 rounded-2xl bg-white/5 ring-1 ring-white/10 min-h-[92px]">
-            </div>
-            <div class="mt-2 text-xs text-white/70">
-              ملاحظة: يمكنك النقر على خانة ممتلئة لإرجاع الحرف إلى سلة الحروف.
+            <div class="flex flex-wrap gap-2" id="gradeButtons">
+              <button class="grade-btn px-4 py-2 rounded-xl bg-white/15 ring-1 ring-white/30 font-semibold smooth" data-grade="1">الصف الأول</button>
+              <button class="grade-btn px-4 py-2 rounded-xl bg-white/15 ring-1 ring-white/30 font-semibold smooth" data-grade="2">الصف الثاني</button>
+              <button class="grade-btn px-4 py-2 rounded-xl bg-white/15 ring-1 ring-white/30 font-semibold smooth" data-grade="3">الصف الثالث</button>
+              <button class="grade-btn px-4 py-2 rounded-xl bg-white/15 ring-1 ring-white/30 font-semibold smooth" data-grade="4">الصف الرابع</button>
             </div>
           </div>
 
-          <!-- Tiles Pool -->
-          <div>
-            <div class="mb-2 text-sm text-fuchsia-100/80">سلة الحروف</div>
-            <div id="pool" class="flex flex-wrap gap-3 p-4 rounded-2xl bg-white/5 ring-1 ring-white/10 min-h-[92px]">
+          <div class="grid grid-cols-2 gap-3 md:grid-cols-4" id="stats">
+            <div class="rounded-2xl bg-white/10 p-4 ring-1 ring-white/10">
+              <div class="text-xs text-fuchsia-100/80">النقاط</div>
+              <div id="pointsBox" class="text-2xl font-bold">0</div>
             </div>
-            <div class="mt-2 text-xs text-white/70">
-              طريقة اللعب: اختر حرفًا ثم اختر الخانة التي تريد وضعه فيها. يمكن أيضاً تبديل حرف مكان آخر مباشرة.
+            <div class="rounded-2xl bg-white/10 p-4 ring-1 ring-white/10">
+              <div class="text-xs text-fuchsia-100/80">الأسئلة المحلولة</div>
+              <div id="solvedBox" class="text-2xl font-bold">0</div>
+            </div>
+            <div class="rounded-2xl bg-white/10 p-4 ring-1 ring-white/10">
+              <div class="text-xs text-fuchsia-100/80">الدقة</div>
+              <div id="accuracyBox" class="text-2xl font-bold">0%</div>
+            </div>
+            <div class="rounded-2xl bg-white/10 p-4 ring-1 ring-white/10">
+              <div class="text-xs text-fuchsia-100/80">سلسلة النجاحات</div>
+              <div id="streakBox" class="text-2xl font-bold">0</div>
             </div>
           </div>
-        </div>
 
-        <!-- Success Overlay -->
-        <div id="successOverlay" class="hidden absolute inset-0 rounded-3xl bg-black/60 backdrop-blur-md flex items-center justify-center p-6">
-          <div class="relative w全文 max-w-md text-center rounded-2xl p-6 md:p-8 bg-gradient-to-br from-indigo-700/90 to-fuchsia-700/90 ring-1 ring-white/20 shadow-2xl">
-            <h2 class="text-2xl md:text-3xl font-extrabold">أحسنت! 🎉</h2>
-            <p class="mt-2 text-fuchsia-100/90">أنهيت الكلمة بنجاح.</p>
-            <div class="mt-4 flex items-center justify-center gap-4">
-              <div class="px-4 py-2 rounded-xl bg-white/10 ring-1 ring-white/20">
-                <div class="text-xs text-fuchsia-100/80">الزمن</div>
-                <div id="finalTime" class="font-bold">00:00</div>
+          <div class="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
+            <div class="rounded-3xl bg-white/8 p-5 ring-1 ring-white/10">
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <div class="text-sm text-fuchsia-100/80">السؤال الحالي</div>
+                  <div id="questionText" class="mt-2 text-2xl md:text-3xl font-extrabold text-white"></div>
+                </div>
+                <div class="rounded-2xl bg-white/10 px-3 py-2 text-2xl" id="operationIcon">➕</div>
               </div>
-              <div class="px-4 py-2 rounded-xl bg-white/10 ring-1 ring-white/20">
-                <div class="text-xs text-fuchsia-100/80">الحركات</div>
-                <div id="finalMoves" class="font-bold">0</div>
-              </div>
+              <div id="contextText" class="mt-3 text-sm text-indigo-100/85 leading-relaxed"></div>
+              <div id="visualBox" class="mt-5 rounded-2xl bg-white/5 p-4 ring-1 ring-white/10 min-h-[110px]"></div>
             </div>
-            <button id="playAgainBtn" class="mt-6 smooth px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-500 hover:to-teal-600 active:scale-[.98] shadow-lg font-bold text-indigo-900">
-              كلمة جديدة
-            </button>
-            <div id="confettiBox" class="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl"></div>
+            <div class="rounded-3xl bg-white/8 p-5 ring-1 ring-white/10">
+              <div class="text-sm text-fuchsia-100/80">خطوات مساعدة مقترحة</div>
+              <ul id="strategyList" class="mt-3 space-y-2 text-sm text-white/90"></ul>
+              <div class="mt-4 rounded-2xl bg-indigo-500/15 p-3 text-xs text-indigo-100/90" id="levelTip"></div>
+            </div>
           </div>
+
+          <div>
+            <div class="text-sm text-fuchsia-100/80 mb-2">اختر الإجابة الصحيحة</div>
+            <div id="choices" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
+          </div>
+
+          <div class="flex flex-wrap gap-3">
+            <button id="hintBtn" class="smooth px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-[.98] ring-1 ring-white/20 font-semibold">تلميح</button>
+            <button id="explainBtn" class="smooth px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-[.98] ring-1 ring-white/20 font-semibold">عرض الحل المفصل</button>
+            <button id="nextBtn" class="smooth px-4 py-2.5 rounded-xl bg-gradient-to-r from-fuchsia-500 to-violet-600 hover:from-fuchsia-600 hover:to-violet-700 active:scale-[.98] font-semibold shadow-lg shadow-fuchsia-900/30" disabled>سؤال جديد</button>
+            <button id="resetBtn" class="smooth px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-[.98] ring-1 ring-white/20 font-semibold">إعادة تعيين التقدم</button>
+          </div>
+
+          <div id="hintBox" class="rounded-2xl bg-white/8 p-4 text-sm text-white/90 ring-1 ring-white/10 hidden"></div>
+          <div id="explanationBox" class="rounded-2xl bg-white/8 p-4 text-sm text-white/90 ring-1 ring-white/10 hidden"></div>
+          <div id="feedback" class="text-lg font-semibold text-white/95"></div>
         </div>
       </section>
-
-      <footer class="mt-6 text-center text-fuchsia-100/70 text-sm">
-        تلميح: حاول إنهاء الكلمة بأقل عدد من الحركات وأسرع وقت!
-      </footer>
     </div>
   </main>
 
+  <div id="confettiBox" class="pointer-events-none fixed inset-0 overflow-hidden"></div>
+
   <script>
-    const WORDS = [
-      { word: "مدرسة", hint: "مكان للتعلم والدراسة", icon: "🎒" },
-      { word: "كتاب", hint: "نقرأ فيه المعرفة", icon: "📘" },
-      { word: "حاسوب", hint: "نستخدمه للتعلم والابتكار", icon: "💻" },
-      { word: "طبيب", hint: "يعالج المرضى ويساعدهم", icon: "🩺" },
-      { word: "علوم", hint: "نستكشف بها الكون", icon: "🔬" },
-      { word: "رياضيات", hint: "علم الأعداد والأشكال", icon: "➕" },
-      { word: "لغة", hint: "وسيلة للتواصل والتعبير", icon: "🗣️" },
-      { word: "طبيعة", hint: "العالم من حولنا", icon: "🌿" }
+    const LEVELS = {
+      1: {
+        label: "الصف الأول",
+        additionMax: 10,
+        subtractionMax: 10,
+        operations: ["addition", "subtraction"],
+        wordRate: 0.65,
+        choiceSpread: 4,
+        tips: "استخدم العد على الأصابع أو المكعبات الملونة لمساعدتك في الجمع والطرح." 
+      },
+      2: {
+        label: "الصف الثاني",
+        additionMax: 20,
+        subtractionMax: 20,
+        operations: ["addition", "subtraction", "missingAddend"],
+        wordRate: 0.6,
+        choiceSpread: 6,
+        tips: "جرب تجميع العشرات ثم الآحاد. يمكنك رسم مربعات لتمثيل الأعداد." 
+      },
+      3: {
+        label: "الصف الثالث",
+        additionMax: 60,
+        subtractionMax: 50,
+        operations: ["addition", "subtraction", "missingAddend", "multiplication"],
+        wordRate: 0.45,
+        choiceSpread: 10,
+        multiplierRange: [2, 9],
+        tips: "تعلم الجداول بالاعتماد على الأنماط. استخدم المساحة أو الصفوف والأعمدة لتصور الضرب." 
+      },
+      4: {
+        label: "الصف الرابع",
+        additionMax: 99,
+        subtractionMax: 99,
+        operations: ["addition", "subtraction", "missingAddend", "multiplication", "division"],
+        wordRate: 0.5,
+        choiceSpread: 12,
+        multiplierRange: [3, 12],
+        tips: "فكر في العلاقات بين العمليات: الضرب عكس القسمة. تحقق من إجابتك بإعادة العملية في الاتجاه العكسي." 
+      }
+    };
+
+    const operationIcons = {
+      addition: "➕",
+      subtraction: "➖",
+      multiplication: "✖️",
+      division: "➗",
+      missingAddend: "❓"
+    };
+
+    const gradeButtons = document.querySelectorAll(".grade-btn");
+    const questionTextEl = document.getElementById("questionText");
+    const contextTextEl = document.getElementById("contextText");
+    const strategyListEl = document.getElementById("strategyList");
+    const levelTipEl = document.getElementById("levelTip");
+    const choicesEl = document.getElementById("choices");
+    const hintBtn = document.getElementById("hintBtn");
+    const explainBtn = document.getElementById("explainBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const hintBox = document.getElementById("hintBox");
+    const explanationBox = document.getElementById("explanationBox");
+    const feedbackEl = document.getElementById("feedback");
+    const operationIconEl = document.getElementById("operationIcon");
+    const visualBoxEl = document.getElementById("visualBox");
+    const confettiBox = document.getElementById("confettiBox");
+    const pointsBox = document.getElementById("pointsBox");
+    const solvedBox = document.getElementById("solvedBox");
+    const accuracyBox = document.getElementById("accuracyBox");
+    const streakBox = document.getElementById("streakBox");
+
+    const state = {
+      grade: 1,
+      question: null,
+      solved: 0,
+      correct: 0,
+      points: 0,
+      streak: 0,
+      hintsUsed: 0,
+      locked: false,
+      questionMistake: false
+    };
+
+    const positiveMessages = [
+      "أحسنت! إجابة صحيحة.",
+      "رائع! استمر في هذا الأداء.",
+      "عمل ممتاز!", 
+      "أنت نجم الرياضيات!"
     ];
 
-    const slotsEl = document.getElementById('slots');
-    const poolEl = document.getElementById('pool');
-    const wordHintEl = document.getElementById('wordHint');
-    const wordIconEl = document.getElementById('wordIcon');
-    const timeBox = document.getElementById('timeBox');
-    const movesBox = document.getElementById('movesBox');
-    const hintsBox = document.getElementById('hintsBox');
-
-    const newWordBtn = document.getElementById('newWordBtn');
-    const hintBtn = document.getElementById('hintBtn');
-    const resetBtn = document.getElementById('resetBtn');
-    const shuffleBtn = document.getElementById('shuffleBtn');
-
-    const successOverlay = document.getElementById('successOverlay');
-    const finalTimeEl = document.getElementById('finalTime');
-    const finalMovesEl = document.getElementById('finalMoves');
-    const playAgainBtn = document.getElementById('playAgainBtn');
-    const confettiBox = document.getElementById('confettiBox');
-
-    let current = null;
-    let moves = 0;
-    let hintsUsed = 0;
-    let started = false;
-    let timer = null;
-    let seconds = 0;
-    let selectedTileId = null;
-    let uid = 0;
-
-    function formatTime(sec) {
-      const m = Math.floor(sec / 60).toString().padStart(2, '0');
-      const s = (sec % 60).toString().padStart(2, '0');
-      return `${m}:${s}`;
-    }
-
-    function startTimer() {
-      if (started) return;
-      started = true;
-      timer = setInterval(() => {
-        seconds += 1;
-        timeBox.textContent = formatTime(seconds);
-      }, 1000);
-    }
-
-    function stopTimer() {
-      clearInterval(timer);
-      timer = null;
-      started = false;
-    }
-
-    function resetTimer() {
-      stopTimer();
-      seconds = 0;
-      timeBox.textContent = "00:00";
-    }
-
-    function updateStats() {
-      movesBox.textContent = moves;
-      hintsBox.textContent = hintsUsed;
+    function randomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
     function randomChoice(arr) {
       return arr[Math.floor(Math.random() * arr.length)];
     }
 
-    function createSlot(index, correctChar) {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = "smooth relative w-14 h-14 md:w-16 md:h-16 grid place-content-center rounded-2xl bg-white/10 ring-1 ring-white/20 text-2xl font-extrabold text-white/90";
-      btn.dataset.index = index;
-      btn.dataset.correct = correctChar;
-      btn.dataset.char = "";
-      btn.dataset.tileId = "";
-      btn.addEventListener('click', () => {
-        const hasChar = btn.dataset.char !== "";
-        if (hasChar && !selectedTileId) {
-          removeFromSlot(btn);
-          moves += 1;
-          updateStats();
-          return;
+    function shuffleArray(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function buildChoices(answer, spread, options = {}) {
+      const { min = 0, max = null } = options;
+      const choiceSet = new Set([answer]);
+      while (choiceSet.size < 4) {
+        const offset = randomInt(-spread, spread);
+        let candidate = answer + offset;
+        if (candidate === answer) continue;
+        if (candidate < min) continue;
+        if (max !== null && candidate > max) continue;
+        choiceSet.add(candidate);
+      }
+      return shuffleArray(Array.from(choiceSet));
+    }
+
+    function generateAddition(level) {
+      const a = randomInt(0, level.additionMax - 1);
+      const b = randomInt(1, level.additionMax - a);
+      const answer = a + b;
+      const useWord = Math.random() < level.wordRate;
+      const contexts = [
+        `مع ليان ${a} أقلام وأعطاها والدها ${b} قلماً إضافياً. كم قلماً أصبح لديها؟`,
+        `في الحديقة ${a} أزهارًا وفتح الحارس ${b} زهرة جديدة. كم زهرة في الحديقة الآن؟`,
+        `جمع سالم ${a} ملصقاً في ألبومه ثم أضاف ${b} ملصقات أخرى. كم ملصقاً لديه الآن؟`
+      ];
+
+      return {
+        type: "addition",
+        display: `${a} + ${b} = ؟`,
+        context: useWord ? randomChoice(contexts) : "اكتب ناتج جمع العددين.",
+        answer,
+        choices: buildChoices(answer, level.choiceSpread, { min: 0 }),
+        hint: `ابدأ بالعدد الأكبر ${Math.max(a, b)} ثم عد ${Math.min(a, b)} خطوات للأمام.`,
+        steps: [
+          `ضع العدد ${a} في عقلك أو اكتبه.`,
+          `أضف إليه ${b} باستخدام الأصابع أو خط الأعداد.`,
+          `سجل الناتج النهائي.`
+        ],
+        explanation: `الجمع يعني تجميع المجموعتين معًا. ${a} + ${b} = ${answer}. يمكنك العد المتتابع حتى تصل إلى ${answer}.`,
+        visual: {
+          type: "blocks",
+          groups: [
+            { count: a, color: "#f472b6", label: `مجموعة ${a}` },
+            { count: b, color: "#60a5fa", label: `مجموعة ${b}` }
+          ],
+          operation: "+"
         }
-        if (selectedTileId) {
-          const selectedTile = document.querySelector(`[data-id="${selectedTileId}"]`);
-          if (!selectedTile) { selectedTileId = null; return; }
-          const selectedChar = selectedTile.dataset.char;
-          if (hasChar) {
-            const prevChar = btn.dataset.char;
-            const prevTileId = btn.dataset.tileId;
-            placeTileInSlot(selectedTile, btn, { countMove: false });
-            if (prevTileId) {
-              const backTile = createTile(prevChar);
-              poolEl.appendChild(backTile);
-            }
-            moves += 1;
-            updateStats();
-            setSelectedTile(null);
-            checkProgress();
-            return;
-          } else {
-            placeTileInSlot(selectedTile, btn);
-            moves += 1;
-            updateStats();
-            setSelectedTile(null);
-            checkProgress();
-            return;
+      };
+    }
+
+    function generateSubtraction(level) {
+      let a = randomInt(2, level.subtractionMax);
+      let b = randomInt(1, Math.min(a, level.subtractionMax));
+      if (b > a) [a, b] = [b, a];
+      const answer = a - b;
+      const useWord = Math.random() < level.wordRate;
+      const contexts = [
+        `كان لدى ناصر ${a} كرات، أهدى صديقه ${b} منها. كم كرة تبقت؟`,
+        `قطفت مريم ${a} تفاحات وأكلت ${b} منها. كم تفاحة بقيت معها؟`,
+        `في المكتبة ${a} قصة، استعار الطلاب ${b} قصص. كم قصة ما زالت في المكتبة؟`
+      ];
+
+      return {
+        type: "subtraction",
+        display: `${a} − ${b} = ؟`,
+        context: useWord ? randomChoice(contexts) : "احسب الفرق بين العددين.",
+        answer,
+        choices: buildChoices(answer, level.choiceSpread, { min: 0 }),
+        hint: `فكر في ${a} ثم ارجع ${b} خطوات إلى الخلف على خط الأعداد.`,
+        steps: [
+          `ارسم ${a} نقطة على خط الأعداد.`,
+          `تحرك ${b} خطوات للخلف لتعرف كم تبقى.`,
+          `العدد الذي تصل إليه هو الفرق.`
+        ],
+        explanation: `الطرح يعني معرفة المتبقي بعد الإزالة. ${a} − ${b} = ${answer}.`,
+        visual: {
+          type: "blocks",
+          groups: [
+            { count: a, color: "#f59e0b", label: `البداية ${a}` },
+            { count: b, color: "#ef4444", label: `المطروح ${b}` }
+          ],
+          operation: "-"
+        }
+      };
+    }
+
+    function generateMissingAddend(level) {
+      const chooseSub = Math.random() > 0.5;
+      if (chooseSub) {
+        const total = randomInt(5, level.additionMax);
+        const part = randomInt(1, total - 1);
+        const answer = total - part;
+        return {
+          type: "missingAddend",
+          display: `؟ + ${part} = ${total}`,
+          context: `ما العدد الذي نحتاج إضافته إلى ${part} حتى نصل إلى ${total}؟`,
+          answer,
+          choices: buildChoices(answer, level.choiceSpread, { min: 0 }),
+          hint: `فكر في ${part} ثم عد خطوات حتى تصل إلى ${total}. عدد الخطوات هو العدد المفقود.`,
+          steps: [
+            `ابدأ من ${part}.`,
+            `عد للأعلى حتى تصل إلى ${total}.`,
+            `احسب كم خطوة أخذت؛ هذا هو العدد المفقود.`
+          ],
+          explanation: `إذا كان ${part} + ؟ = ${total}، فنطرح ${part} من ${total} لنجد العدد المفقود. ${total} − ${part} = ${answer}.`,
+          visual: {
+            type: "numberLine",
+            start: part,
+            end: total,
+            target: answer
           }
+        };
+      } else {
+        const minuend = randomInt(8, level.subtractionMax);
+        const result = randomInt(0, minuend - 1);
+        const answer = minuend - result;
+        return {
+          type: "missingAddend",
+          display: `${minuend} − ؟ = ${result}`,
+          context: `ما العدد الذي طرحناه من ${minuend} لنحصل على ${result}؟`,
+          answer,
+          choices: buildChoices(answer, level.choiceSpread, { min: 0 }),
+          hint: `أضف إلى ${result} حتى تصل إلى ${minuend}.`,
+          steps: [
+            `ابدأ من ${result}.`,
+            `عد للأمام حتى تصل إلى ${minuend}.`,
+            `العدد الذي أضفته هو القيمة المفقودة.`
+          ],
+          explanation: `لمعرفة العدد المجهول في ${minuend} − ؟ = ${result}، نحسب الفرق بين ${minuend} و${result}. ${minuend} − ${result} = ${answer}.`,
+          visual: {
+            type: "numberLine",
+            start: result,
+            end: minuend,
+            target: answer
+          }
+        };
+      }
+    }
+
+    function generateMultiplication(level) {
+      const [minM, maxM] = level.multiplierRange || [2, 9];
+      const safeMax = state.grade === 3 ? Math.max(minM + 1, maxM - 2) : maxM;
+      const a = randomInt(minM, safeMax);
+      const bMax = state.grade === 3 ? Math.min(6, maxM) : maxM;
+      const b = randomInt(2, bMax);
+      const answer = a * b;
+      const contexts = [
+        `يوجد ${a} صف من الكراسي وكل صف يحتوي على ${b} كرسي. كم كرسيًا في القاعة؟`,
+        `زرعت المعلمة ${a} صفوف من الأزهار وفي كل صف ${b} زهرة. كم زهرة زرعت؟`,
+        `في المتحف ${a} خزائن، وكل خزانة تحتوي على ${b} مجسمات. كم عدد المجسمات؟`
+      ];
+      return {
+        type: "multiplication",
+        display: `${a} × ${b} = ؟`,
+        context: state.grade >= 3 ? randomChoice(contexts) : "استخدم الضرب لحساب عدد المجموعات المتساوية.",
+        answer,
+        choices: buildChoices(answer, level.choiceSpread, { min: 0 }),
+        hint: `تخيل ${a} مجموعات وكل مجموعة فيها ${b} عناصر. اجمع عدد العناصر في كل المجموعات.`,
+        steps: [
+          `ارسم ${a} صفوف وكل صف يحتوي على ${b} عناصر.`,
+          `عد العناصر كلها أو استخدم الجمع المتكرر ${a} + ${a} + ...`,
+          `سجل الناتج النهائي.`
+        ],
+        explanation: `الضرب هو جمع متكرر. لدينا ${a} مجموعات متساوية، في كل منها ${b} عناصر، فيكون الناتج ${answer}.`,
+        visual: {
+          type: "array",
+          rows: a,
+          columns: b
         }
-      });
-      return btn;
+      };
     }
 
-    function setSelectedTile(id) {
-      document.querySelectorAll('.tile').forEach(t => t.classList.remove('selected-tile'));
-      selectedTileId = id;
-      if (!id) return;
-      const el = document.querySelector(`[data-id="${id}"]`);
-      if (el) el.classList.add('selected-tile');
-    }
-
-    function createTile(char) {
-      uid += 1;
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = "tile smooth w-14 h-14 md:w-16 md:h-16 grid place-content-center rounded-2xl bg-gradient-to-br from-fuchsia-400 to-violet-600 hover:from-fuchsia-500 hover:to-violet-700 shadow-lg shadow-fuchsia-900/30 text-2xl font-extrabold text-indigo-950";
-      btn.textContent = char;
-      btn.dataset.char = char;
-      btn.dataset.id = "t" + uid;
-
-      btn.addEventListener('click', () => {
-        startTimer();
-        if (selectedTileId === btn.dataset.id) {
-          setSelectedTile(null);
-        } else {
-          setSelectedTile(btn.dataset.id);
+    function generateDivision(level) {
+      const [minM, maxM] = level.multiplierRange || [3, 12];
+      const divisor = randomInt(2, maxM);
+      const quotient = randomInt(2, 10);
+      const dividend = divisor * quotient;
+      const contexts = [
+        `قسم المعلم ${dividend} كتابًا بالتساوي على ${divisor} طلاب. كم كتابًا يحصل عليه كل طالب؟`,
+        `وضعنا ${dividend} كرة في صناديق، وكل صندوق يتسع لـ ${divisor} كرات. كم صندوقًا نحتاج؟`,
+        `لدى ندى ${dividend} قطعة حلوى تريد توزيعها بالتساوي على ${divisor} أصدقاء. كم قطعة يأخذ كل صديق؟`
+      ];
+      return {
+        type: "division",
+        display: `${dividend} ÷ ${divisor} = ؟`,
+        context: randomChoice(contexts),
+        answer: quotient,
+        choices: buildChoices(quotient, level.choiceSpread, { min: 0 }),
+        hint: `فكر في جدول الضرب: أي عدد مضروب في ${divisor} يعطينا ${dividend}؟`,
+        steps: [
+          `استخدم جدول الضرب للعثور على العدد الذي يعطي ${dividend} عند ضربه بـ ${divisor}.`,
+          `يمكنك توزيع ${dividend} عنصرًا على ${divisor} مجموعات وعدد ما يوجد في كل مجموعة.`,
+          `الناتج هو عدد العناصر في كل مجموعة.`
+        ],
+        explanation: `القسمة هي العملية العكسية للضرب. إذا كان ${divisor} × ؟ = ${dividend} فإن الإجابة هي ${quotient}.`,
+        visual: {
+          type: "groups",
+          groups: divisor,
+          itemsPerGroup: quotient
         }
-      });
-      return btn;
+      };
     }
 
-    function placeTileInSlot(tileEl, slotEl, opts = {}) {
-      const { countMove = true } = opts;
-      startTimer();
-      const char = tileEl.dataset.char;
-      slotEl.dataset.char = char;
-      slotEl.dataset.tileId = tileEl.dataset.id;
-      slotEl.textContent = char;
-      const isCorrect = char === slotEl.dataset.correct;
-      slotEl.classList.remove('bg-white/10', 'ring-white/20', 'bg-red-500/20', 'ring-red-400/40', 'bg-emerald-500/20', 'ring-emerald-400/40');
-      slotEl.classList.add(isCorrect ? 'bg-emerald-500/20' : 'bg-red-500/20', isCorrect ? 'ring-emerald-400/40' : 'ring-red-400/40');
-      tileEl.remove();
-      if (countMove) {
-        moves += 1;
+    function generateQuestion() {
+      const level = LEVELS[state.grade];
+      const generatorKey = randomChoice(level.operations);
+      let question;
+      switch (generatorKey) {
+        case "addition":
+          question = generateAddition(level);
+          break;
+        case "subtraction":
+          question = generateSubtraction(level);
+          break;
+        case "missingAddend":
+          question = generateMissingAddend(level);
+          break;
+        case "multiplication":
+          question = generateMultiplication(level);
+          break;
+        case "division":
+          question = generateDivision(level);
+          break;
+        default:
+          question = generateAddition(level);
+      }
+      question.icon = operationIcons[question.type] || "➕";
+      return question;
+    }
+
+    function renderBlocks(group) {
+      const tens = Math.floor(group.count / 10);
+      const ones = group.count % 10;
+      let html = `<div class="space-y-1"><div class="text-xs text-white/75">${group.label}</div><div class="flex flex-wrap gap-1">`;
+      for (let i = 0; i < tens; i++) {
+        html += `<span class="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-white/20 text-xs" style="border:2px solid ${group.color}">10</span>`;
+      }
+      for (let i = 0; i < ones; i++) {
+        html += `<span class="inline-flex h-6 w-6 items-center justify-center rounded-full" style="background:${group.color}"></span>`;
+      }
+      if (group.count === 0) {
+        html += `<span class="text-xs text-white/70">لا يوجد عناصر</span>`;
+      }
+      html += "</div></div>";
+      return html;
+    }
+
+    function renderVisual(visual) {
+      if (!visual) {
+        visualBoxEl.innerHTML = '<div class="text-sm text-white/60">لا يوجد تمثيل بصري لهذا السؤال.</div>';
+        return;
+      }
+      if (visual.type === "blocks") {
+        const groupsHtml = visual.groups.map(renderBlocks).join("");
+        const sign = visual.operation === "+" ? "مجموع" : visual.operation === "-" ? "المتبقي" : "";
+        visualBoxEl.innerHTML = `<div class="space-y-3"><div class="text-xs text-white/70">${sign || ""}</div><div class="grid gap-3 md:grid-cols-2">${groupsHtml}</div></div>`;
+      } else if (visual.type === "numberLine") {
+        const steps = visual.target;
+        let html = `<div class="space-y-2"><div class="text-xs text-white/70">استخدم خط الأعداد من ${visual.start} إلى ${visual.end}</div>`;
+        html += `<div class="relative h-16 rounded-2xl bg-white/10 flex items-center px-4">
+          <div class="absolute left-4 right-4 h-0.5 bg-white/30"></div>`;
+        const totalSteps = Math.max(visual.end - visual.start, 1);
+        for (let i = 0; i <= totalSteps; i++) {
+          const value = visual.start + i;
+          const left = (i / totalSteps) * 100;
+          html += `<div class="absolute top-8 text-xs" style="right: calc(${100 - left}% - 10px);">${value}</div>`;
+          html += `<div class="absolute top-0 h-3 w-0.5 bg-white/60" style="right: ${100 - left}%"></div>`;
+        }
+        html += `</div>`;
+        html += `<div class="text-xs text-white/75">احتجنا إلى ${steps} خطوات للوصول إلى العدد المطلوب.</div>`;
+        html += `</div>`;
+        visualBoxEl.innerHTML = html;
+      } else if (visual.type === "array") {
+        let html = `<div class="space-y-2"><div class="text-xs text-white/70">صفوف × أعمدة</div>`;
+        html += `<div class="grid gap-1" style="grid-template-columns: repeat(${visual.columns}, minmax(0, 1fr));">`;
+        for (let i = 0; i < visual.rows * visual.columns; i++) {
+          html += `<div class="aspect-square rounded-lg bg-white/15"></div>`;
+        }
+        html += `</div>`;
+        html += `<div class="text-xs text-white/75">لدينا ${visual.rows} صفوف وكل صف يحتوي على ${visual.columns} عناصر.</div>`;
+        html += `</div>`;
+        visualBoxEl.innerHTML = html;
+      } else if (visual.type === "groups") {
+        let html = `<div class="space-y-2"><div class="text-xs text-white/70">قسم العناصر على مجموعات متساوية</div>`;
+        html += `<div class="grid gap-3 md:grid-cols-2">`;
+        for (let g = 1; g <= visual.groups; g++) {
+          html += `<div class="rounded-2xl bg-white/10 p-3"><div class="text-xs text-white/70 mb-2">مجموعة ${g}</div><div class="flex flex-wrap gap-1">`;
+          for (let i = 0; i < visual.itemsPerGroup; i++) {
+            html += `<span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-400/80 text-xs">${i + 1}</span>`;
+          }
+          html += `</div></div>`;
+        }
+        html += `</div><div class="text-xs text-white/75">كل مجموعة تحتوي على ${visual.itemsPerGroup} عناصر متساوية.</div></div>`;
+        visualBoxEl.innerHTML = html;
+      } else {
+        visualBoxEl.innerHTML = '<div class="text-sm text-white/60">تمرين دون تمثيل بصري.</div>';
+      }
+    }
+
+    function renderStrategies(steps) {
+      strategyListEl.innerHTML = steps.map(step => `<li class="rounded-xl bg-white/10 px-3 py-2">${step}</li>`).join("");
+    }
+
+    function renderChoices(choices) {
+      choicesEl.innerHTML = "";
+      choices.forEach(choice => {
+        const btn = document.createElement("button");
+        btn.className = "smooth rounded-2xl bg-white/10 px-4 py-3 text-lg font-semibold hover:bg-white/20 active:scale-[.98] ring-1 ring-white/15";
+        btn.textContent = choice;
+        btn.addEventListener("click", () => handleAnswer(choice, btn));
+        choicesEl.appendChild(btn);
+      });
+    }
+
+    function updateStats() {
+      pointsBox.textContent = state.points;
+      solvedBox.textContent = state.solved;
+      const accuracy = state.solved > 0 ? Math.round((state.correct / state.solved) * 100) : 0;
+      accuracyBox.textContent = `${accuracy}%`;
+      streakBox.textContent = state.streak;
+    }
+
+    function setFeedback(message, isPositive = true) {
+      feedbackEl.textContent = message;
+      feedbackEl.className = `text-lg font-semibold ${isPositive ? "text-emerald-200" : "text-rose-200"}`;
+    }
+
+    function handleAnswer(choice, button) {
+      if (state.locked) return;
+      if (choice === state.question.answer) {
+        state.locked = true;
+        state.solved += 1;
+        if (!state.questionMistake) {
+          state.correct += 1;
+        }
+        state.streak += 1;
+        state.points += 10 + state.streak;
+        setFeedback(randomChoice(positiveMessages), true);
+        button.classList.add("bg-emerald-500/80", "text-white");
+        disableChoices();
+        launchConfetti();
+        nextBtn.disabled = false;
+        updateStats();
+      } else {
+        button.disabled = true;
+        button.classList.add("bg-rose-500/70", "text-white");
+        state.questionMistake = true;
+        state.points = Math.max(0, state.points - 2);
+        state.streak = 0;
+        setFeedback("ليست الإجابة الصحيحة، جرّب مرة أخرى!", false);
         updateStats();
       }
     }
 
-    function removeFromSlot(slotEl) {
-      const char = slotEl.dataset.char;
-      if (!char) return;
-      const tile = createTile(char);
-      poolEl.appendChild(tile);
-
-      slotEl.dataset.char = "";
-      slotEl.dataset.tileId = "";
-      slotEl.textContent = "";
-      slotEl.className = "smooth relative w-14 h-14 md:w-16 md:h-16 grid place-content-center rounded-2xl bg-white/10 ring-1 ring-white/20 text-2xl font-extrabold text-white/90";
+    function disableChoices() {
+      Array.from(choicesEl.children).forEach(child => child.disabled = true);
     }
 
-    function clearBoard() {
-      slotsEl.innerHTML = "";
-      poolEl.innerHTML = "";
-      setSelectedTile(null);
+    function resetFeedback() {
+      feedbackEl.textContent = "";
+      feedbackEl.className = "text-lg font-semibold text-white/95";
     }
 
-    function shuffleArray(arr) {
-      for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
+    function loadQuestion() {
+      state.question = generateQuestion();
+      state.locked = false;
+      state.questionMistake = false;
+      nextBtn.disabled = true;
+      hintBox.classList.add("hidden");
+      explanationBox.classList.add("hidden");
+      hintBox.textContent = "";
+      explanationBox.textContent = "";
+      resetFeedback();
+
+      questionTextEl.textContent = state.question.display;
+      contextTextEl.textContent = state.question.context;
+      operationIconEl.textContent = state.question.icon;
+      renderStrategies(state.question.steps);
+      renderVisual(state.question.visual);
+      renderChoices(state.question.choices);
+      levelTipEl.textContent = LEVELS[state.grade].tips;
+    }
+
+    function applyHint() {
+      if (!state.question) return;
+      hintBox.textContent = state.question.hint;
+      hintBox.classList.remove("hidden");
+      if (!state.locked) {
+        state.hintsUsed += 1;
+        state.points = Math.max(0, state.points - 1);
+        updateStats();
       }
-      return arr;
     }
 
-    function shufflePool() {
-      const children = Array.from(poolEl.children);
-      shuffleArray(children);
-      children.forEach(ch => poolEl.appendChild(ch));
+    function showExplanation() {
+      if (!state.question) return;
+      explanationBox.textContent = state.question.explanation;
+      explanationBox.classList.remove("hidden");
     }
 
-    function checkProgress() {
-      const slotNodes = Array.from(slotsEl.children);
-      let allCorrect = true;
-      for (const slot of slotNodes) {
-        const placed = slot.dataset.char || "";
-        const correct = slot.dataset.correct || "";
-        if (!placed || placed !== correct) {
-          allCorrect = false;
+    function resetProgress() {
+      state.solved = 0;
+      state.correct = 0;
+      state.points = 0;
+      state.streak = 0;
+      state.hintsUsed = 0;
+      updateStats();
+      setFeedback("تمت إعادة تعيين التقدم. لنبدأ من جديد!", true);
+    }
+
+    function selectGrade(grade) {
+      state.grade = grade;
+      state.solved = 0;
+      state.correct = 0;
+      state.points = 0;
+      state.streak = 0;
+      state.hintsUsed = 0;
+      gradeButtons.forEach(btn => {
+        if (Number(btn.dataset.grade) === grade) {
+          btn.classList.add("bg-gradient-to-r", "from-fuchsia-500", "to-violet-600", "text-white", "shadow-lg", "shadow-fuchsia-900/30");
+        } else {
+          btn.classList.remove("bg-gradient-to-r", "from-fuchsia-500", "to-violet-600", "text-white", "shadow-lg", "shadow-fuchsia-900/30");
         }
-      }
-      if (allCorrect && slotNodes.length > 0) {
-        onWin();
-      }
-    }
-
-    function onWin() {
-      stopTimer();
-      finalTimeEl.textContent = formatTime(seconds);
-      finalMovesEl.textContent = moves.toString();
-      successOverlay.classList.remove('hidden');
-      launchConfetti();
+      });
+      updateStats();
+      levelTipEl.textContent = LEVELS[state.grade].tips;
+      loadQuestion();
     }
 
     function launchConfetti() {
       confettiBox.innerHTML = "";
       const colors = ["#f472b6", "#a78bfa", "#60a5fa", "#34d399", "#f59e0b", "#ef4444"];
-      const count = 90;
+      const count = 80;
       for (let i = 0; i < count; i++) {
-        const piece = document.createElement('div');
+        const piece = document.createElement("div");
         piece.className = "confetti-piece";
-        const color = colors[Math.floor(Math.random() * colors.length)];
-        piece.style.background = color;
+        piece.style.background = colors[Math.floor(Math.random() * colors.length)];
         piece.style.left = Math.random() * 100 + "%";
         const delay = (Math.random() * 0.7).toFixed(2);
-        const duration = (2.8 + Math.random() * 1.9).toFixed(2);
-        piece.style.animationDuration = duration + "s";
-        piece.style.animationDelay = delay + "s";
-        piece.style.transform = `rotate(${Math.floor(Math.random()*360)}deg)`;
+        const duration = (2.5 + Math.random() * 2).toFixed(2);
+        piece.style.animationDuration = `${duration}s`;
+        piece.style.animationDelay = `${delay}s`;
+        piece.style.transform = `rotate(${Math.floor(Math.random() * 360)}deg)`;
         confettiBox.appendChild(piece);
       }
+      setTimeout(() => { confettiBox.innerHTML = ""; }, 3500);
     }
 
-    function getPoolTileForChar(char) {
-      return Array.from(poolEl.children).find(t => t.dataset.char === char) || null;
-    }
-
-    function findIncorrectSlotWithChar(char) {
-      const slots = Array.from(slotsEl.children);
-      for (const s of slots) {
-        if ((s.dataset.char || "") === char && s.dataset.correct !== char) {
-          return s;
-        }
-      }
-      return null;
-    }
-
-    function applyHint() {
-      const slots = Array.from(slotsEl.children);
-      let targetSlot = slots.find(s => !s.dataset.char);
-      let putCorrectChar;
-      if (targetSlot) {
-        putCorrectChar = targetSlot.dataset.correct;
-      } else {
-        targetSlot = slots.find(s => s.dataset.char && s.dataset.char !== s.dataset.correct);
-        if (!targetSlot) return;
-        putCorrectChar = targetSlot.dataset.correct;
-      }
-
-      let tile = getPoolTileForChar(putCorrectChar);
-      if (!tile) {
-        const wrongSlot = findIncorrectSlotWithChar(putCorrectChar);
-        if (wrongSlot) {
-          const ch = wrongSlot.dataset.char;
-          removeFromSlot(wrongSlot);
-          tile = getPoolTileForChar(ch);
-        }
-      }
-      if (!tile) return;
-      if (targetSlot.dataset.char && targetSlot.dataset.char !== targetSlot.dataset.correct) {
-        removeFromSlot(targetSlot);
-      }
-      placeTileInSlot(tile, targetSlot, { countMove: false });
-
-      hintsUsed += 1;
-      updateStats();
-      checkProgress();
-    }
-
-    function initGame(newRandom = true) {
-      clearBoard();
-      resetTimer();
-      moves = 0;
-      hintsUsed = 0;
-      updateStats();
-
-      const chosen = newRandom ? randomChoice(WORDS) : current || randomChoice(WORDS);
-      const letters = Array.from(chosen.word);
-      current = { ...chosen, letters };
-
-      letters.forEach((ch, i) => {
-        const s = createSlot(i, ch);
-        slotsEl.appendChild(s);
-      });
-
-      const shuffled = shuffleArray([...letters]);
-      shuffled.forEach(ch => {
-        const t = createTile(ch);
-        poolEl.appendChild(t);
-      });
-
-      wordHintEl.textContent = chosen.hint;
-      wordIconEl.textContent = chosen.icon;
-
-      successOverlay.classList.add('hidden');
-      confettiBox.innerHTML = "";
-    }
-
-    newWordBtn.addEventListener('click', () => initGame(true));
-    resetBtn.addEventListener('click', () => {
-      Array.from(slotsEl.children).forEach(removeFromSlot);
-      shufflePool();
-      moves += 1;
-      updateStats();
+    gradeButtons.forEach(btn => {
+      btn.addEventListener("click", () => selectGrade(Number(btn.dataset.grade)));
     });
-    shuffleBtn.addEventListener('click', () => {
-      shufflePool();
-      moves += 1;
-      updateStats();
-    });
-    hintBtn.addEventListener('click', () => applyHint());
-    playAgainBtn.addEventListener('click', () => initGame(true));
 
-    initGame(true);
+    hintBtn.addEventListener("click", applyHint);
+    explainBtn.addEventListener("click", showExplanation);
+    nextBtn.addEventListener("click", () => {
+      if (state.locked) {
+        loadQuestion();
+      }
+    });
+    resetBtn.addEventListener("click", () => {
+      resetProgress();
+      loadQuestion();
+    });
+
+    selectGrade(1);
+    updateStats();
   </script>
 </body>
 </html>
