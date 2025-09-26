@@ -32,19 +32,19 @@ No exotic deps. Keep it simple so it stays maintainable (future-you will say tha
 
 🚀 Quick Start
 Option A — Plain HTML/JS
-git clone https://github.com/<YOUR_ORG>/<REPO_NAME>.git
-cd <REPO_NAME>
+
+
 
 # Serve locally (any static server works)
-python -m http.server 5173
-# Visit http://localhost:5173
+
+# [Visit http://localhost:5173](https://app.netlify.com/projects/puzzelstem/deploys/68d6a25d5f80110008e85c76)
 
 Option B — React + Vite
-git clone https://github.com/<YOUR_ORG>/<REPO_NAME>.git
+
 cd <REPO_NAME>
 npm i
 npm run dev
-# Open the URL shown by Vite (e.g., http://localhost:5173)
+
 
 # Build & Preview
 npm run build
