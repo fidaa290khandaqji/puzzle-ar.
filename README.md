@@ -1,4 +1,4 @@
-nteractive Math Adventure (Grades 1–4)
+interactive Math Adventure (Grades 1–4)
 
 A bilingual-ready (AR/EN) web game that builds number sense using visual models, manipulatives, and guided steps. Fast to use, simple to deploy, classroom-friendly.
 
