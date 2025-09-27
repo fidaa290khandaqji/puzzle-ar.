@@ -13,6 +13,30 @@
     }
     html, body { height: 100%; }
     body { font-family: 'Tajawal', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Liberation Sans', sans-serif; }
+    body.ar-mode {
+      background: transparent !important;
+    }
+    body.ar-mode main {
+      position: relative;
+      z-index: 20;
+      background: transparent;
+    }
+    body.ar-mode header,
+    body.ar-mode footer {
+      text-shadow: 0 4px 20px rgba(0,0,0,0.35);
+    }
+    body.ar-mode #gameCard {
+      background: rgba(15,23,42,0.55);
+      backdrop-filter: blur(18px);
+    }
+    #arVideo {
+      background: #000;
+    }
+    #arHud .stat-card {
+      min-width: 88px;
+    }
+    #arExitWrap { pointer-events: none; }
+    #arExitWrap button { pointer-events: auto; }
     /* Confetti animation */
     .confetti-piece {
       position: absolute;
@@ -52,7 +76,7 @@
       </header>
 
       <!-- Game Card -->
-      <section class="relative rounded-3xl p-4 md:p-8 bg-white/10 backdrop-blur-xl shadow-2xl ring-1 ring-white/20 overflow-hidden">
+      <section id="gameCard" class="relative rounded-3xl p-4 md:p-8 bg-white/10 backdrop-blur-xl shadow-2xl ring-1 ring-white/20 overflow-hidden">
         <!-- Decorative glow -->
         <div class="pointer-events-none absolute -top-24 -left-24 w-72 h-72 bg-fuchsia-500/30 rounded-full blur-3xl"></div>
         <div class="pointer-events-none absolute -bottom-24 -right-24 w-72 h-72 bg-indigo-500/30 rounded-full blur-3xl"></div>
@@ -95,6 +119,9 @@
           </button>
           <button id="shuffleBtn" class="smooth px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-[.98] ring-1 ring-white/20 font-semibold">
             خلط الحروف
+          </button>
+          <button id="arModeBtn" class="smooth px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 active:scale-[.98] shadow-lg shadow-emerald-900/30 font-semibold">
+            تفعيل الواقع المعزز
           </button>
         </div>
 
@@ -149,6 +176,33 @@
       </footer>
     </div>
   </main>
+  <video id="arVideo" class="hidden fixed inset-0 w-full h-full object-cover z-0" autoplay muted playsinline></video>
+  <div id="arHud" class="hidden fixed inset-x-0 top-0 z-30 flex justify-center pointer-events-none px-4">
+    <div class="mt-6 flex gap-4 rounded-3xl bg-slate-900/70 backdrop-blur-xl ring-1 ring-white/10 shadow-2xl px-4 py-3 text-sm md:text-base text-white">
+      <div class="stat-card flex flex-col items-center">
+        <span class="text-emerald-200/80 text-xs">الزمن</span>
+        <span id="arTimeBox" class="font-semibold tracking-wide">00:00</span>
+      </div>
+      <div class="stat-card flex flex-col items-center">
+        <span class="text-emerald-200/80 text-xs">الحركات</span>
+        <span id="arMovesBox" class="font-semibold tracking-wide">0</span>
+      </div>
+      <div class="stat-card flex flex-col items-center">
+        <span class="text-emerald-200/80 text-xs">التلميحات</span>
+        <span id="arHintsBox" class="font-semibold tracking-wide">0</span>
+      </div>
+    </div>
+  </div>
+  <div id="arInstruction" class="hidden fixed inset-x-0 bottom-4 z-30 flex justify-center px-4">
+    <div class="max-w-xl rounded-3xl bg-slate-900/70 backdrop-blur-xl ring-1 ring-white/10 shadow-2xl px-5 py-3 text-sm md:text-base text-white/90 leading-relaxed">
+      وجّه الكاميرا نحو مساحة مستوية، ثم المس الحروف لتوزيعها في الخانات واستكمل الكلمة أمامك في الواقع.
+    </div>
+  </div>
+  <div id="arExitWrap" class="hidden fixed top-4 left-4 z-40 pointer-events-none">
+    <button id="exitArBtn" class="pointer-events-auto smooth px-4 py-2 rounded-2xl bg-slate-900/80 hover:bg-slate-900 text-sm md:text-base font-semibold text-white ring-1 ring-white/20 shadow-lg">
+      الخروج من الواقع المعزز
+    </button>
+  </div>
 
   <script>
     const WORDS = [
@@ -174,12 +228,21 @@
     const hintBtn = document.getElementById('hintBtn');
     const resetBtn = document.getElementById('resetBtn');
     const shuffleBtn = document.getElementById('shuffleBtn');
+    const arModeBtn = document.getElementById('arModeBtn');
 
     const successOverlay = document.getElementById('successOverlay');
     const finalTimeEl = document.getElementById('finalTime');
     const finalMovesEl = document.getElementById('finalMoves');
     const playAgainBtn = document.getElementById('playAgainBtn');
     const confettiBox = document.getElementById('confettiBox');
+    const arVideo = document.getElementById('arVideo');
+    const arHud = document.getElementById('arHud');
+    const arInstruction = document.getElementById('arInstruction');
+    const arExitWrap = document.getElementById('arExitWrap');
+    const exitArBtn = document.getElementById('exitArBtn');
+    const arTimeBox = document.getElementById('arTimeBox');
+    const arMovesBox = document.getElementById('arMovesBox');
+    const arHintsBox = document.getElementById('arHintsBox');
 
     let current = null;
     let moves = 0;
@@ -189,6 +252,8 @@
     let seconds = 0;
     let selectedTileId = null;
     let uid = 0;
+    let arStream = null;
+    let arActive = false;
 
     function formatTime(sec) {
       const m = Math.floor(sec / 60).toString().padStart(2, '0');
@@ -196,12 +261,20 @@
       return `${m}:${s}`;
     }
 
+    function updateTimeDisplay() {
+      const formatted = formatTime(seconds);
+      timeBox.textContent = formatted;
+      if (arTimeBox) {
+        arTimeBox.textContent = formatted;
+      }
+    }
+
     function startTimer() {
       if (started) return;
       started = true;
       timer = setInterval(() => {
         seconds += 1;
-        timeBox.textContent = formatTime(seconds);
+        updateTimeDisplay();
       }, 1000);
     }
 
@@ -214,16 +287,111 @@
     function resetTimer() {
       stopTimer();
       seconds = 0;
-      timeBox.textContent = "00:00";
+      updateTimeDisplay();
     }
 
     function updateStats() {
       movesBox.textContent = moves;
       hintsBox.textContent = hintsUsed;
+      if (arMovesBox) {
+        arMovesBox.textContent = moves;
+      }
+      if (arHintsBox) {
+        arHintsBox.textContent = hintsUsed;
+      }
+      if (arActive) {
+        updateTimeDisplay();
+      }
     }
 
     function randomChoice(arr) {
       return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    const defaultArButtonLabel = arModeBtn ? arModeBtn.textContent.trim() : 'تفعيل الواقع المعزز';
+
+    async function startArMode() {
+      if (!arModeBtn || arActive) return;
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        alert('الواقع المعزز غير مدعوم على هذا الجهاز أو المتصفح.');
+        return;
+      }
+
+      const previousLabel = arModeBtn.textContent;
+      arModeBtn.disabled = true;
+      arModeBtn.textContent = 'جاري تفعيل الكاميرا...';
+
+      try {
+        arStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' } },
+          audio: false
+        });
+
+        arVideo.srcObject = arStream;
+        await arVideo.play();
+
+        document.body.classList.add('ar-mode');
+        arVideo.classList.remove('hidden');
+        if (arHud) arHud.classList.remove('hidden');
+        if (arInstruction) arInstruction.classList.remove('hidden');
+        if (arExitWrap) arExitWrap.classList.remove('hidden');
+
+        arModeBtn.textContent = 'الوضع المعزز مفعل';
+        arActive = true;
+        updateStats();
+        updateTimeDisplay();
+      } catch (error) {
+        console.error('Failed to start AR mode:', error);
+        alert('تعذر تشغيل الكاميرا. تأكد من منح الإذن واستخدام متصفح يدعم الواقع المعزز.');
+        if (arStream) {
+          arStream.getTracks().forEach(track => track.stop());
+          arStream = null;
+        }
+        if (arVideo) {
+          arVideo.pause();
+          arVideo.srcObject = null;
+        }
+        document.body.classList.remove('ar-mode');
+        if (arHud) arHud.classList.add('hidden');
+        if (arInstruction) arInstruction.classList.add('hidden');
+        if (arExitWrap) arExitWrap.classList.add('hidden');
+        arModeBtn.textContent = previousLabel || defaultArButtonLabel;
+        arModeBtn.disabled = false;
+      }
+    }
+
+    function stopArMode() {
+      if (!arActive && !arStream) {
+        if (arModeBtn) {
+          arModeBtn.disabled = false;
+          arModeBtn.textContent = defaultArButtonLabel;
+        }
+        return;
+      }
+
+      if (arStream) {
+        arStream.getTracks().forEach(track => track.stop());
+        arStream = null;
+      }
+
+      if (arVideo) {
+        arVideo.pause();
+        arVideo.srcObject = null;
+        arVideo.classList.add('hidden');
+      }
+
+      document.body.classList.remove('ar-mode');
+
+      if (arHud) arHud.classList.add('hidden');
+      if (arInstruction) arInstruction.classList.add('hidden');
+      if (arExitWrap) arExitWrap.classList.add('hidden');
+
+      if (arModeBtn) {
+        arModeBtn.disabled = false;
+        arModeBtn.textContent = defaultArButtonLabel;
+      }
+
+      arActive = false;
     }
 
     function createSlot(index, correctChar) {
@@ -480,6 +648,25 @@
     });
     hintBtn.addEventListener('click', () => applyHint());
     playAgainBtn.addEventListener('click', () => initGame(true));
+    if (arModeBtn) {
+      arModeBtn.addEventListener('click', () => {
+        if (arActive) return;
+        startArMode();
+      });
+    }
+    if (exitArBtn) {
+      exitArBtn.addEventListener('click', () => {
+        stopArMode();
+      });
+    }
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        stopArMode();
+      }
+    });
+    window.addEventListener('beforeunload', () => {
+      stopArMode();
+    });
 
     initGame(true);
   </script>
